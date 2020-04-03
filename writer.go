@@ -3,6 +3,7 @@ package rollingwriter
 import (
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 	"log"
@@ -288,7 +289,10 @@ func (w *AsynchronousWriter) Write(b []byte) (int, error) {
 
 			l := len(b)
 			for len(b) > 0 {
-				buf := _asyncBufferPool.Get().([]byte)
+				buf, ok := _asyncBufferPool.Get().([]byte)
+				if !ok {
+					return 0, errors.New("failed to cast pool item to byte slice")
+				}
 				n := copy(buf, b)
 				w.queue <- buf[:n]
 				b = b[n:]
